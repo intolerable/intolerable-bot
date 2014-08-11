@@ -13,7 +13,6 @@ data-files:
 
 executable intolerable-bot
   main-is:             Main.hs
-  other-modules:       Paths_intolerable_bot
   default-extensions:
     FlexibleContexts,
     OverloadedStrings
