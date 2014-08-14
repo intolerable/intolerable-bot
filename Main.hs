@@ -68,7 +68,7 @@ act = forever $ do
           liftIO $ print $ Comment.author comment
           -- TODO: make sure we didn't already answer
           handle $ directParent comment
-  wait 30
+  wait 15
 
 checkPrevious :: M ()
 checkPrevious = do
