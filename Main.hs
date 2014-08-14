@@ -60,10 +60,14 @@ act = forever $ do
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
     when (not alreadyInPosted) $ do
-      liftIO $ print $ commentID comment
-      liftIO $ print $ Comment.author comment
-      -- TODO: make sure we didn't already answer
-      handle $ directParent comment
+      p <- getPostInfo $ parentLink comment
+      case content p of
+        Link _ -> return ()
+        _ -> do
+          liftIO $ print $ commentID comment
+          liftIO $ print $ Comment.author comment
+          -- TODO: make sure we didn't already answer
+          handle $ directParent comment
   wait 30
 
 checkPrevious :: M ()
