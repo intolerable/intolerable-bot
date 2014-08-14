@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Applicative
+import Control.Concurrent (threadDelay)
 import Control.Monad (forever, forM_, liftM, void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader
@@ -48,6 +49,7 @@ runBot user pass sub = do
   file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
   err <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file)
   print err
+  threadDelay (60 * 1000 * 1000)
   runBot user pass sub
   where Username username = user
 
