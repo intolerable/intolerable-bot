@@ -1,12 +1,8 @@
 module Main where
 
-import Control.Applicative
 import Control.Concurrent (threadDelay)
-import Control.Monad (forever, forM_, liftM, void)
-import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader
 import Control.Monad.State
-import Data.Maybe (mapMaybe)
 import Data.Monoid
 import Data.Set (Set)
 import Data.Text (Text)
@@ -60,7 +56,7 @@ act = forever $ do
   comments <- getNewSubredditComments subreddit
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
-    when (not alreadyInPosted) $ do
+    unless alreadyInPosted $ do
       p <- getPostInfo $ parentLink comment
       case content p of
         Link _ -> return ()
@@ -79,7 +75,7 @@ log a = do
 
 checkPrevious :: M ()
 checkPrevious = do
-  (user, subreddit, _, _) <- lift $ lift ask
+  (user, _, _, _) <- lift $ lift ask
   Listing previousComments <- getUserComments user
   mapM_ (record . directParent) previousComments
 
@@ -91,7 +87,7 @@ handle :: Either PostID CommentID -> M ()
 handle t = do
   (_, _, file, _) <- lift $ lift ask
   record t
-  reply' t file
+  void $ reply' t file
   liftIO $ print t
   where reply' = either reply reply
 
