@@ -56,12 +56,14 @@ act = forever $ do
   comments <- getNewSubredditComments subreddit
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
-    log (commentID comment, Comment.author comment, Comment.parentLink comment)
     unless alreadyInPosted $ do
       p <- getPostInfo $ parentLink comment
       case content p of
         Link _ -> return ()
-        _ -> handle $ directParent comment -- TODO: make sure we didn't already answer
+        _ -> do
+          log (commentID comment, Comment.author comment, Comment.parentLink comment)
+          -- TODO: make sure we didn't already answer
+          handle $ directParent comment
   wait 15
 
 log :: Show a => a -> M ()
