@@ -6,7 +6,7 @@ It looks like you're interested in learning to play Dota 2 or new to the game. H
 
 The in-game tutorial (you will be prompted to try it when first joining the game, otherwise found under "Quests") will bring you up to speed on some of the basics on movement, combat, buying items, and more.
 
-Link | Explanation
+&nbsp; | Guides for beginners
 -----|------------
 [Tutorial: How to Play Dota 2 In 4 Minutes](http://www.youtube.com/watch?v=akUNmFAzS98) | A brief video guide that will get you up to speed on all the basic components of a Dota 2 match. If you like to learn by doing and just get the basics, this is a great guide.
 [In-game guides for each hero](http://www.dota2.com/workshop/builds/overview) | You can subscribe to guides in the Steam Workshop and they will appear in-game with item and skill build recommendations. Reading the top-rated hero guide is often a good idea when playing a hero for the first time.
