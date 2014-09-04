@@ -56,14 +56,12 @@ act = forever $ do
   comments <- getNewSubredditComments subreddit
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
+    log (commentID comment, Comment.author comment, Comment.parentLink comment)
     unless alreadyInPosted $ do
       p <- getPostInfo $ parentLink comment
       case content p of
         Link _ -> return ()
-        _ -> do
-          log (commentID comment, Comment.author comment)
-          -- TODO: make sure we didn't already answer
-          handle $ directParent comment
+        _ -> handle $ directParent comment -- TODO: make sure we didn't already answer
   wait 15
 
 log :: Show a => a -> M ()
@@ -88,7 +86,6 @@ handle t = do
   (_, _, file, _) <- lift $ lift ask
   record t
   void $ reply' t file
-  liftIO $ print t
   where reply' = either reply reply
 
 commentMentions :: Username -> Comment -> Bool
