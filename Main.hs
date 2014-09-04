@@ -11,6 +11,7 @@ import Data.Monoid
 import Data.Set (Set)
 import Data.Text (Text)
 import Paths_intolerable_bot
+import Prelude hiding (log)
 import Reddit.API
 import Reddit.API.Types.Comment
 import Reddit.API.Types.Listing
@@ -25,7 +26,7 @@ import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import qualified Reddit.API.Types.Comment as Comment
 
-type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text) IO)) a
+type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text, FilePath) IO)) a
 
 instance Ord PostID where
   compare (PostID a) (PostID b) = compare a b
@@ -37,25 +38,25 @@ main :: IO ()
 main = do
   args <- fmap (fmap Text.pack) getArgs
   case args of
-    user:pass:sub:[] -> do
+    user:pass:sub:fn:[] -> do
       putStrLn "Starting..."
-      runBot (Username user) pass (R sub)
+      runBot (Username user) pass (R sub) (Text.unpack fn)
     _ -> do
       putStrLn "Usage: intolerable-bot USERNAME PASSWORD SUBREDDIT"
       exitFailure
 
-runBot :: Username -> Text -> SubredditName -> IO ()
-runBot user pass sub = do
+runBot :: Username -> Text -> SubredditName -> FilePath -> IO ()
+runBot user pass sub filename = do
   file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
-  err <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file)
+  err <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
   print err
   threadDelay (60 * 1000 * 1000)
-  runBot user pass sub
+  runBot user pass sub filename
   where Username username = user
 
 act :: M ()
 act = forever $ do
-  (user, subreddit, _) <- lift $ lift ask
+  (user, subreddit, _, _) <- lift $ lift ask
   comments <- getNewSubredditComments subreddit
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
@@ -64,15 +65,21 @@ act = forever $ do
       case content p of
         Link _ -> return ()
         _ -> do
-          liftIO $ print $ commentID comment
-          liftIO $ print $ Comment.author comment
+          log (commentID comment, Comment.author comment)
           -- TODO: make sure we didn't already answer
           handle $ directParent comment
   wait 15
 
+log :: Show a => a -> M ()
+log a = do
+  (_, _, _, file) <- lift $ lift ask
+  liftIO $ do
+    print a
+    appendFile file (show a ++ "\n")
+
 checkPrevious :: M ()
 checkPrevious = do
-  (user, subreddit, _) <- lift $ lift ask
+  (user, subreddit, _, _) <- lift $ lift ask
   Listing previousComments <- getUserComments user
   mapM_ (record . directParent) previousComments
 
@@ -82,7 +89,7 @@ expandComment p (Reference _ c) = getMoreChildren p c
 
 handle :: Either PostID CommentID -> M ()
 handle t = do
-  (_, _, file) <- lift $ lift ask
+  (_, _, file, _) <- lift $ lift ask
   record t
   reply' t file
   liftIO $ print t
