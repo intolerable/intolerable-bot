@@ -57,7 +57,7 @@ runBot user pass sub filename = do
 act :: M ()
 act = forever $ do
   (user, subreddit, _, _) <- lift $ lift ask
-  comments <- getNewSubredditComments subreddit
+  Listing _ _ comments <- getNewSubredditComments subreddit
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
     unless alreadyInPosted $ do
@@ -83,7 +83,7 @@ log a = do
 checkPrevious :: M ()
 checkPrevious = do
   (user, _, _, _) <- lift $ lift ask
-  Listing previousComments <- getUserComments user
+  Listing _ _ previousComments <- getUserComments user
   mapM_ (record . directParent) previousComments
 
 expandComment :: PostID -> CommentReference -> Reddit [CommentReference]
