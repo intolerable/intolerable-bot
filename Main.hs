@@ -1,11 +1,15 @@
 module Main where
 
+import Control.Applicative
 import Control.Concurrent (threadDelay)
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Monoid
 import Data.Set (Set)
 import Data.Text (Text)
+import Data.Time.Clock (getCurrentTime)
+import Data.Time.Format (formatTime)
+import System.Locale (defaultTimeLocale, rfc822DateFormat)
 import Paths_intolerable_bot
 import Prelude hiding (log)
 import Reddit.API
@@ -69,9 +73,12 @@ act = forever $ do
 log :: Show a => a -> M ()
 log a = do
   (_, _, _, file) <- lift $ lift ask
+  time <- liftIO $
+    formatTime defaultTimeLocale rfc822DateFormat <$> getCurrentTime
+  let outputString = time <> ": " <> show a <> "\n"
   liftIO $ do
-    print a
-    appendFile file (show a ++ "\n")
+    putStr outputString
+    appendFile file outputString
 
 checkPrevious :: M ()
 checkPrevious = do
