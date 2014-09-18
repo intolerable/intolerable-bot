@@ -49,6 +49,7 @@ runBot :: Username -> Text -> SubredditName -> FilePath -> IO ()
 runBot user pass sub filename = do
   file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
   err <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
+  logIO filename err
   print err
   threadDelay (60 * 1000 * 1000)
   runBot user pass sub filename
@@ -73,12 +74,15 @@ act = forever $ do
 log :: Show a => a -> M ()
 log a = do
   (_, _, _, file) <- lift $ lift ask
-  time <- liftIO $
-    formatTime defaultTimeLocale rfc822DateFormat <$> getCurrentTime
+  liftIO $ logIO file a
+
+logIO :: Show a => FilePath -> a -> IO ()
+logIO fp a = do
+  time <- formatTime defaultTimeLocale rfc822DateFormat <$> getCurrentTime
   let outputString = time <> ": " <> show a <> "\n"
-  liftIO $ do
-    putStr outputString
-    appendFile file outputString
+  putStr outputString
+  appendFile fp outputString
+
 
 checkPrevious :: M ()
 checkPrevious = do
