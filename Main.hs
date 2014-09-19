@@ -48,7 +48,7 @@ main = do
 runBot :: Username -> Text -> SubredditName -> FilePath -> IO ()
 runBot user pass sub filename = do
   file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
-  err <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
+  (err, _) <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
   logIO filename err
   print err
   threadDelay (60 * 1000 * 1000)
