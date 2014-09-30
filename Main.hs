@@ -9,7 +9,6 @@ import Data.Set (Set)
 import Data.Text (Text)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
-import System.Locale (defaultTimeLocale, rfc822DateFormat)
 import Paths_intolerable_bot
 import Prelude hiding (log)
 import Reddit.API
@@ -21,6 +20,7 @@ import Reddit.API.Types.User
 import Reddit.Bot (wait)
 import System.Environment (getArgs)
 import System.Exit (exitFailure)
+import System.Locale (defaultTimeLocale, rfc822DateFormat)
 import qualified Data.Set as Set
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
