@@ -57,8 +57,7 @@ runBot :: Options -> IO ()
 runBot o@(Options user pass sub filename) = do
   file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
   (err, _) <- runReaderT (runStateT (runRedditWithRateLimiting u pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
-  whenJust filename $ \fn -> logIO fn err
-  print err
+  logIO filename err
   threadDelay (60 * 1000 * 1000)
   runBot o
   where Username u = user
@@ -82,14 +81,14 @@ act = forever $ do
 log :: Show a => a -> M ()
 log a = do
   (_, _, _, fn) <- lift $ lift ask
-  whenJust fn $ \f -> liftIO $ logIO f a
+  liftIO $ logIO fn a
 
-logIO :: Show a => FilePath -> a -> IO ()
+logIO :: Show a => Maybe FilePath -> a -> IO ()
 logIO fp a = do
   time <- formatTime defaultTimeLocale rfc822DateFormat <$> getCurrentTime
   let outputString = time <> ": " <> show a <> "\n"
   putStr outputString
-  appendFile fp outputString
+  whenJust fp $ \f -> appendFile f outputString
 
 checkPrevious :: M ()
 checkPrevious = do
