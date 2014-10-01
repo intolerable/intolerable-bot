@@ -21,6 +21,7 @@ executable intolerable-bot
     containers,
     mtl,
     old-locale,
+    optparse-applicative,
     reddit,
     text,
     time,

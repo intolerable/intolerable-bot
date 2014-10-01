@@ -9,6 +9,7 @@ import Data.Set (Set)
 import Data.Text (Text)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
+import Options.Applicative
 import Paths_intolerable_bot
 import Prelude hiding (log)
 import Reddit.API
@@ -18,15 +19,13 @@ import Reddit.API.Types.Post
 import Reddit.API.Types.Subreddit
 import Reddit.API.Types.User
 import Reddit.Bot (wait)
-import System.Environment (getArgs)
-import System.Exit (exitFailure)
 import System.Locale (defaultTimeLocale, rfc822DateFormat)
 import qualified Data.Set as Set
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import qualified Reddit.API.Types.Comment as Comment
 
-type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text, FilePath) IO)) a
+type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text, Maybe FilePath) IO)) a
 
 instance Ord PostID where
   compare (PostID a) (PostID b) = compare a b
@@ -34,31 +33,40 @@ instance Ord PostID where
 instance Ord CommentID where
   compare (CommentID a) (CommentID b) = compare a b
 
+data Options =
+  Options { username :: Username
+          , password :: Text
+          , subreddit :: SubredditName
+          , logFileName :: Maybe FilePath }
+  deriving (Show, Read, Eq)
+
+opts :: Parser Options
+opts = Options <$> (Username <$> argument text (metavar "USERNAME"))
+               <*> argument text (metavar "PASSWORD")
+               <*> (R <$> argument text (metavar "SUBREDDIT"))
+               <*> optional (strOption (long "log-file" <> metavar "LOG"))
+  where text = fmap Text.pack . str
+
 main :: IO ()
 main = do
-  args <- fmap (fmap Text.pack) getArgs
-  case args of
-    user:pass:sub:fn:[] -> do
-      putStrLn "Starting..."
-      runBot (Username user) pass (R sub) (Text.unpack fn)
-    _ -> do
-      putStrLn "Usage: intolerable-bot USERNAME PASSWORD SUBREDDIT"
-      exitFailure
+  o <- execParser $ info (helper <*> opts) fullDesc
+  putStrLn "Starting..."
+  runBot o
 
-runBot :: Username -> Text -> SubredditName -> FilePath -> IO ()
-runBot user pass sub filename = do
+runBot :: Options -> IO ()
+runBot o@(Options user pass sub filename) = do
   file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
-  (err, _) <- runReaderT (runStateT (runRedditWithRateLimiting username pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
-  logIO filename err
+  (err, _) <- runReaderT (runStateT (runRedditWithRateLimiting u pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename)
+  whenJust filename $ \fn -> logIO fn err
   print err
   threadDelay (60 * 1000 * 1000)
-  runBot user pass sub filename
-  where Username username = user
+  runBot o
+  where Username u = user
 
 act :: M ()
 act = forever $ do
-  (user, subreddit, _, _) <- lift $ lift ask
-  Listing _ _ comments <- getNewSubredditComments subreddit
+  (user, sub, _, _) <- lift $ lift ask
+  Listing _ _ comments <- getNewSubredditComments sub
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
     unless alreadyInPosted $ do
@@ -73,8 +81,8 @@ act = forever $ do
 
 log :: Show a => a -> M ()
 log a = do
-  (_, _, _, file) <- lift $ lift ask
-  liftIO $ logIO file a
+  (_, _, _, fn) <- lift $ lift ask
+  whenJust fn $ \f -> liftIO $ logIO f a
 
 logIO :: Show a => FilePath -> a -> IO ()
 logIO fp a = do
@@ -82,7 +90,6 @@ logIO fp a = do
   let outputString = time <> ": " <> show a <> "\n"
   putStr outputString
   appendFile fp outputString
-
 
 checkPrevious :: M ()
 checkPrevious = do
@@ -121,3 +128,7 @@ directParent c =
   case Comment.inReplyTo c of
     Just x -> Right x
     Nothing -> Left $ Comment.parentLink c
+
+whenJust :: Monad m => Maybe a -> (a -> m ()) -> m ()
+whenJust (Just x) f = f x
+whenJust Nothing _ = return ()
