@@ -27,12 +27,6 @@ import qualified Reddit.API.Types.Comment as Comment
 
 type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text, Maybe FilePath) IO)) a
 
-instance Ord PostID where
-  compare (PostID a) (PostID b) = compare a b
-
-instance Ord CommentID where
-  compare (CommentID a) (CommentID b) = compare a b
-
 data Options =
   Options { username :: Username
           , password :: Text
