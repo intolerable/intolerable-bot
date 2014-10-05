@@ -99,7 +99,10 @@ handle :: Either PostID CommentID -> M ()
 handle t = do
   (_, _, file, _) <- lift $ lift ask
   record t
-  void $ reply' t file
+  res <- nest $ reply' t file
+  case res of
+    Left x -> log x
+    Right _ -> return ()
   where reply' = either reply reply
 
 commentMentions :: Username -> Comment -> Bool
