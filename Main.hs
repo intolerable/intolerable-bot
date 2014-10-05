@@ -24,6 +24,7 @@ import qualified Data.Set as Set
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
 import qualified Reddit.API.Types.Comment as Comment
+import qualified Reddit.API.Types.Options as Reddit
 
 type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text, Maybe FilePath) IO)) a
 
@@ -59,7 +60,7 @@ runBot o@(Options user pass sub filename) = do
 act :: M ()
 act = forever $ do
   (user, sub, _, _) <- lift $ lift ask
-  Listing _ _ comments <- getNewSubredditComments sub
+  Listing _ _ comments <- getNewComments' (Reddit.Options Nothing (Just 100)) (Just sub)
   forM_ (filter (commentMentions user) comments) $ \comment -> do
     alreadyInPosted <- query $ directParent comment
     unless alreadyInPosted $ do
