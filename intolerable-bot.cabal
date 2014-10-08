@@ -18,10 +18,12 @@ executable intolerable-bot
     OverloadedStrings
   build-depends:
     base == 4.7.*,
+    bytestring,
     containers,
     mtl,
     old-locale,
     optparse-applicative,
+    parsec,
     reddit,
     text,
     time,
