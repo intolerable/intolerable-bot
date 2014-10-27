@@ -1,4 +1,4 @@
-module BanList (loadBanList) where
+module BanList (BanList, loadBanList) where
 
 import Control.Applicative hiding (optional, many, (<|>))
 import Reddit.API.Types.User
