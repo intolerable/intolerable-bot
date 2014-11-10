@@ -8,7 +8,7 @@
 4. `cabal sandbox init`
 5. `cabal sandbox add-source ../reddit`
 6. `cabal install`
-7. `.cabal-sandbox/bin/intolerable-bot USERNAME PASSWORD SUBREDDIT_NAME` like `intolerable-bot intolerable-bot $PASSWORD Dota2`
+7. `.cabal-sandbox/bin/intolerable-bot USERNAME PASSWORD SUBREDDIT_NAME REPLY_FILE` like `intolerable-bot intolerable-bot $PASSWORD Dota2 reply.md`
 
 ## installing it to your global cabal installation
 
@@ -17,7 +17,7 @@
 3. clone the [`reddit`](https://github.com/intolerable/reddit) repo into `../reddit` (relative to this repo)
 5. `cabal install ../reddit`
 6. `cabal install`
-7. `intolerable-bot USERNAME PASSWORD SUBREDDIT_NAME` (assuming your `cabal/bin` directory is in your `$PATH`)
+7. `intolerable-bot USERNAME PASSWORD SUBREDDIT_NAME REPLY_FILE` (assuming your `cabal/bin` directory is in your `$PATH`)
 
 ## modifying the comment it posts
 
