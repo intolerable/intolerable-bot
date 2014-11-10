@@ -12,7 +12,6 @@ import Data.Text (Text)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Options.Applicative
-import Paths_intolerable_bot
 import Prelude hiding (log)
 import Reddit.API
 import Reddit.API.Types.Comment
@@ -35,6 +34,7 @@ data Options =
   Options { username :: Username
           , password :: Text
           , subreddit :: SubredditName
+          , replyFileName :: FilePath
           , logFileName :: Maybe FilePath
           , banListFileName :: Maybe FilePath }
   deriving (Show, Read, Eq)
@@ -43,6 +43,7 @@ opts :: Parser Options
 opts = Options <$> (Username <$> argument text (metavar "USERNAME"))
                <*> argument text (metavar "PASSWORD")
                <*> (R <$> argument text (metavar "SUBREDDIT"))
+               <*> argument str (metavar "REPLY_FILE")
                <*> optional (strOption (long "log-file" <> metavar "LOG"))
                <*> optional (strOption (long "ban-list-file" <> metavar "BAN_LIST"))
   where text = fmap Text.pack str
@@ -54,8 +55,8 @@ main = do
   runBot o
 
 runBot :: Options -> IO ()
-runBot o@(Options user pass sub filename banList) = do
-  file <- liftIO $ Text.readFile =<< getDataFileName "reply.md"
+runBot o@(Options user pass sub replyFile logFile banList) = do
+  file <- liftIO $ Text.readFile replyFile
   bl <- case banList of
     Just fn -> do
       list <- loadBanList fn
@@ -65,8 +66,8 @@ runBot o@(Options user pass sub filename banList) = do
           exitFailure
         Right l -> return l
     Nothing -> return []
-  (err, _) <- runReaderT (runStateT (runRedditWithRateLimiting u pass (checkPrevious >> act)) Set.empty) (user, sub, file, filename, bl)
-  logIO filename err
+  (err, _) <- runReaderT (runStateT (runRedditWithRateLimiting u pass (checkPrevious >> act)) Set.empty) (user, sub, file, logFile, bl)
+  logIO logFile err
   threadDelay (60 * 1000 * 1000)
   runBot o
   where Username u = user

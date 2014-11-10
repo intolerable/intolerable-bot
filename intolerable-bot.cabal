@@ -8,8 +8,6 @@ maintainer:          fraser.m.murray@gmail.com
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
-data-files:
-  reply.md
 
 executable intolerable-bot
   main-is:             Main.hs
