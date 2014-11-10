@@ -45,7 +45,7 @@ opts = Options <$> (Username <$> argument text (metavar "USERNAME"))
                <*> (R <$> argument text (metavar "SUBREDDIT"))
                <*> optional (strOption (long "log-file" <> metavar "LOG"))
                <*> optional (strOption (long "ban-list-file" <> metavar "BAN_LIST"))
-  where text = fmap Text.pack . str
+  where text = fmap Text.pack str
 
 main :: IO ()
 main = do
