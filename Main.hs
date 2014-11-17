@@ -76,7 +76,7 @@ act :: M ()
 act = forever $ do
   (user, sub, _, _, bans) <- lift $ lift ask
   Listing _ _ comments <- getNewComments' (Reddit.Options Nothing (Just 100)) (Just sub)
-  forM_ (filter (commentMentions user) comments) $ \comment -> do
+  forM_ (filter (shouldRespond user) comments) $ \comment -> do
     if Comment.author comment `elem` bans
       then
         log $ "Banned user trying to post: " <> show (Comment.author comment)
@@ -124,8 +124,10 @@ handle t = do
     Right _ -> return ()
   where reply' = either reply reply
 
-commentMentions :: Username -> Comment -> Bool
-commentMentions (Username user) c = ("/u/" <> Text.toLower user) `Text.isInfixOf` Text.toLower (body c)
+shouldRespond :: Username -> Comment -> Bool
+shouldRespond (Username user) c =
+  ("/u/" <> Text.toLower user) `Text.isInfixOf` Text.toLower (body c) &&
+  Comment.author c /= Username user
 
 alreadyAnswered :: Username -> [Comment] -> Bool
 alreadyAnswered user = any ((== user) . Comment.author)
