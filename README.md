@@ -19,10 +19,6 @@
 6. `cabal install`
 7. `intolerable-bot USERNAME PASSWORD SUBREDDIT_NAME REPLY_FILE` (assuming your `cabal/bin` directory is in your `$PATH`)
 
-## modifying the comment it posts
-
-the comment that the bot posts is pulled from `reply.md`. edit that if you want to make it say something else
-
 ## suggesting changes to the reply
 
 if you want to change the text for the original bot that runs on [/r/Dota2](http://reddit.com/r/Dota2), fork this repo, edit it, and send me a pull request

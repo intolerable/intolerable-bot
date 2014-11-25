@@ -13,20 +13,19 @@ import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Options.Applicative
 import Prelude hiding (log)
-import Reddit.API
-import Reddit.API.Types.Comment
-import Reddit.API.Types.Listing
-import Reddit.API.Types.Post
-import Reddit.API.Types.Subreddit
-import Reddit.API.Types.User
-import Reddit.Bot (wait)
+import Reddit
+import Reddit.Types.Comment
+import Reddit.Types.Listing
+import Reddit.Types.Post
+import Reddit.Types.Subreddit
+import Reddit.Types.User
 import System.Exit (exitFailure)
 import System.Locale (defaultTimeLocale, rfc822DateFormat)
 import qualified Data.Set as Set
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
-import qualified Reddit.API.Types.Comment as Comment
-import qualified Reddit.API.Types.Options as Reddit
+import qualified Reddit.Types.Comment as Comment
+import qualified Reddit.Types.Options as Reddit
 
 type M a = RedditT (StateT (Set (Either PostID CommentID)) (ReaderT (Username, SubredditName, Text, Maybe FilePath, [Username]) IO)) a
 
@@ -91,6 +90,9 @@ act = forever $ do
               -- TODO: make sure we didn't already answer
               handle $ directParent comment
   wait 15
+
+wait :: Int -> M ()
+wait s = liftIO $ threadDelay (s * 1000000)
 
 log :: Show a => a -> M ()
 log a = do

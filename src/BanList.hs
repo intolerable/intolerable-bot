@@ -1,7 +1,7 @@
 module BanList (BanList, loadBanList) where
 
 import Control.Applicative hiding (optional, many, (<|>))
-import Reddit.API.Types.User
+import Reddit.Types.User
 import Text.Parsec
 import Text.Parsec.ByteString
 import qualified Data.Text as Text
