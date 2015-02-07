@@ -13,7 +13,7 @@ import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format (formatTime)
 import Options.Applicative
 import Prelude hiding (log)
-import Reddit
+import Reddit hiding (bans)
 import Reddit.Types.Comment
 import Reddit.Types.Listing
 import Reddit.Types.Post
@@ -86,9 +86,20 @@ act = forever $ do
           case content p of
             Link _ -> return ()
             _ -> do
-              log (commentID comment, Comment.author comment, Comment.parentLink comment)
-              -- TODO: make sure we didn't already answer
-              handle $ directParent comment
+              case Comment.inReplyTo comment of
+                Nothing -> do
+                  log (commentID comment, Comment.author comment, Comment.parentLink comment)
+                  -- TODO: make sure we didn't already answer
+                  handle $ directParent comment
+                Just c -> do
+                  commentInfo <- getCommentInfo c
+                  if Comment.author commentInfo == user
+                    then
+                      return ()
+                    else do
+                      log (commentID comment, Comment.author comment, Comment.parentLink comment)
+                      -- TODO: make sure we didn't already answer
+                      handle $ directParent comment
   wait 15
 
 wait :: Int -> M ()
