@@ -15,7 +15,7 @@ executable intolerable-bot
     FlexibleContexts,
     OverloadedStrings
   build-depends:
-    base == 4.7.*,
+    base >= 4.7 && < 4.9,
     bytestring,
     containers,
     mtl,
