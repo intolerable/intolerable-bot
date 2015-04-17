@@ -20,7 +20,7 @@ import Reddit.Types.Post
 import Reddit.Types.Subreddit
 import Reddit.Types.User
 import System.Exit (exitFailure)
-import System.Locale (defaultTimeLocale, rfc822DateFormat)
+import Data.Time.Locale.Compat (defaultTimeLocale)
 import qualified Data.Set as Set
 import qualified Data.Text as Text
 import qualified Data.Text.IO as Text
@@ -112,7 +112,7 @@ log a = do
 
 logIO :: Show a => Maybe FilePath -> a -> IO ()
 logIO fp a = do
-  time <- formatTime defaultTimeLocale rfc822DateFormat <$> getCurrentTime
+  time <- formatTime defaultTimeLocale "%a, %_d %b %Y %H:%M:%S %Z" <$> getCurrentTime
   let outputString = time <> ": " <> show a <> "\n"
   putStr outputString
   whenJust fp $ \f -> appendFile f outputString

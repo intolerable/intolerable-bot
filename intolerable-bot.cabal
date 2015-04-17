@@ -19,12 +19,12 @@ executable intolerable-bot
     bytestring,
     containers,
     mtl,
-    old-locale,
     optparse-applicative == 0.11.*,
     parsec,
     reddit,
     text,
     time,
+    time-locale-compat,
     transformers
   hs-source-dirs:      ./, src/
   default-language:    Haskell2010
