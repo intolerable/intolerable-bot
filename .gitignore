@@ -1,4 +1,5 @@
 */.DS_Store
+*.yaml
 .cabal-sandbox
 cabal.sandbox.config
 dist/
