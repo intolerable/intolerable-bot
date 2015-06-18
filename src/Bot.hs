@@ -245,7 +245,7 @@ resolveComments p refs = concat <$> mapM f refs
       resolveComments p moreComments
 
 shouldRespond :: Username -> Text -> Bool
-shouldRespond (Username u) = Text.isInfixOf ("u/" <> u)
+shouldRespond (Username u) = Text.isInfixOf (Text.toCaseFold $ "u/" <> u) . Text.toCaseFold
 
 withInitial :: a -> ((a -> b) -> a -> b) -> b
 withInitial = flip fix
