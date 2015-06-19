@@ -31,6 +31,7 @@ import Reddit.Types.Subreddit (SubredditName(..))
 import Reddit.Types.User (Username(..))
 import System.Exit
 import System.IO.Error
+import qualified Data.BoundedSet as Bounded
 import qualified Data.Classifier.NaiveBayes as NB
 import qualified Data.Counter as Counter
 import qualified Data.Map as Map
@@ -151,10 +152,10 @@ postsLoop sem = do
   rt <- lift $ asks replyText
   cls <- lift $ asks (fromJust . classifier)
   use <- lift $ asks useClassifier
-  withInitial Nothing $ \loop x -> do
-    Listing b _ ps <- getPosts' (Options (Before <$> x) (Just 100)) New (Just r)
-    t `seconds` threadDelay
-    forM_ ps $ \p ->
+  withInitial (Bounded.empty 500) $ \loop set -> do
+    Listing _ _ ps <- getPosts' (Options Nothing (Just 100)) New (Just r)
+    let news = filter (\x -> not $ Bounded.member (Post.postID x) set) ps
+    forM_ news $ \p ->
       unless (Post.author p == u) $
         case Post.content p of
           Post.SelfPost m _ -> do
@@ -179,25 +180,19 @@ postsLoop sem = do
                       , coerce $ Post.postID p ]
               _ -> return ()
           _ -> return ()
-    case b of
-      Just next -> loop $ Just next
-      Nothing -> case ps of
-        p:_ -> loop $ Just $ Post.postID p
-        [] -> loop x
+    t `seconds` threadDelay
+    loop $ Bounded.insertAll (Post.postID <$> news) set
 
 commentsLoop :: WriteSem -> RedditT (ReaderT ConcreteSettings IO) ()
 commentsLoop sem = do
   r <- lift $ asks subreddit
   t <- lift $ asks refreshTime
-  withInitial Nothing $ \loop x -> do
-    Listing b _ cs <- getNewComments' (Options (Before <$> x) (Just 100)) (Just r)
-    mapM_ (commentResponder sem) cs
+  withInitial (Bounded.empty 500) $ \loop set -> do
+    Listing _ _ cs <- getNewComments' (Options Nothing (Just 100)) (Just r)
+    let news = filter (\x -> not $ Bounded.member (Comment.commentID x) set) cs
+    mapM_ (commentResponder sem) news
     t `seconds` threadDelay
-    case b of
-      Just next -> loop $ Just next
-      Nothing -> case cs of
-        c:_ -> loop $ Just $ Comment.commentID c
-        [] -> loop x
+    loop $ Bounded.insertAll (Comment.commentID <$> news) set
 
 commentResponder :: WriteSem -> Comment -> RedditT (ReaderT ConcreteSettings IO) ()
 commentResponder sem c = do
