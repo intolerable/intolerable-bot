@@ -141,7 +141,9 @@ loopWith act sem settings = fix $ \loop -> do
     Left (APIError CredentialsError) ->
       withWriteSem sem $
         Text.putStrLn $ "Username / password details incorrect for /r/" <> coerce (subreddit settings)
-    Left _ -> loop
+    Left err -> do
+      liftIO $ print err
+      loop
     Right () -> loop
 
 postsLoop :: WriteSem -> RedditT (ReaderT ConcreteSettings IO) ()
