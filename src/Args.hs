@@ -84,6 +84,7 @@ instance FromJSON Settings where
       parsedBans =
         mappend <$> (pure . BansList . map Username <$> (o .: "bans" <|> pure []))
                 <*> ((pure . BansFilePath <$> o .: "bans_file") <|> pure [])
+  parseJSON Null = pure mempty
   parseJSON _ = mempty
 
 data Bans = BansList [Username]
