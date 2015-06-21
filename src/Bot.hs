@@ -227,7 +227,12 @@ getSiblingComments c = do
   let parent = Comment.parentLink c
   PostComments p cs <-
     case Comment.inReplyTo c of
-      Just parentComment -> getPostSubComments parent parentComment
+      Just parentComment ->
+        getPostSubComments parent parentComment >>= \case
+          PostComments p (com:_) -> do
+            Listing _ _ cs <- mconcat <$> map Comment.replies <$> resolveComments parent [com]
+            return $ PostComments p cs
+          x -> return x
       Nothing -> getPostComments parent
   case Post.content p of
     Post.SelfPost _ _ -> (,) True <$> resolveComments parent cs
