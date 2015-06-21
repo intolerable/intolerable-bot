@@ -143,6 +143,7 @@ loopWith act sem settings = fix $ \loop -> do
         Text.putStrLn $ "Username / password details incorrect for /r/" <> coerce (subreddit settings)
     Left err -> do
       liftIO $ print err
+      (5 * refreshTime settings) `seconds` threadDelay
       loop
     Right () -> loop
 
