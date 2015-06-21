@@ -163,7 +163,7 @@ postsLoop sem = do
           Post.SelfPost m _ -> do
             let c = Counter.fromList $ process m
             case NB.test cls c of
-              Just True -> do
+              Just True ->
                 if use
                   then do
                     PostComments _ cs <- getPostComments $ Post.postID p

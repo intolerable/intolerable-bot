@@ -18,16 +18,16 @@ newWriteSemIO :: IO WriteSem
 newWriteSemIO = WriteSem <$> newTVarIO True
 
 waitWriteSem :: WriteSem -> STM ()
-waitWriteSem (WriteSem t) = do
+waitWriteSem (WriteSem t) =
   readTVar t >>= \case
-    True -> do
+    True ->
       writeTVar t False
     False -> retry
 
 signalWriteSem :: WriteSem -> STM ()
-signalWriteSem (WriteSem t) = do
+signalWriteSem (WriteSem t) =
   readTVar t >>= \case
-    False -> do
+    False ->
       writeTVar t True
     True -> retry
 
