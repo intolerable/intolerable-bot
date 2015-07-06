@@ -30,6 +30,7 @@ import Reddit.Types.Post (PostID)
 import Reddit.Types.Subreddit (SubredditName(..))
 import Reddit.Types.User (Username(..))
 import System.Exit
+import System.IO
 import System.IO.Error
 import qualified Data.BoundedSet as Bounded
 import qualified Data.Classifier.NaiveBayes as NB
@@ -53,6 +54,8 @@ data ConcreteSettings =
 
 main :: IO ()
 main = do
+  hSetBuffering stdout NoBuffering
+  hSetBuffering stderr NoBuffering
   ConfigFile fp <- optionsFromArgs
   decodeFileEither fp >>= \case
     Left err -> do
