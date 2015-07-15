@@ -160,6 +160,7 @@ postsLoop sem = do
   use <- lift $ asks useClassifier
   withInitial (Bounded.empty 500) $ \loop set -> do
     Listing _ _ ps <- getPosts' (Options Nothing (Just 100)) New (Just r)
+    writeLogEntry sem r "got listing"
     let news = filter (\x -> not $ Bounded.member (Post.postID x) set) ps
     forM_ news $ \p ->
       unless (Post.author p == u) $
@@ -186,6 +187,7 @@ postsLoop sem = do
                       , coerce $ Post.postID p ]
               _ -> return ()
           _ -> return ()
+    unless (null news) $ writeLogEntry sem r "got listing"
     t `seconds` threadDelay
     loop $ Bounded.insertAll (Post.postID <$> news) set
 
@@ -195,8 +197,10 @@ commentsLoop sem = do
   t <- lift $ asks refreshTime
   withInitial (Bounded.empty 500) $ \loop set -> do
     Listing _ _ cs <- getNewComments' (Options Nothing (Just 100)) (Just r)
+    writeLogEntry sem r "got listing"
     let news = filter (\x -> not $ Bounded.member (Comment.commentID x) set) cs
     mapM_ (commentResponder sem) news
+    unless (null news) $ writeLogEntry sem r "dealt with new comments"
     t `seconds` threadDelay
     loop $ Bounded.insertAll (Comment.commentID <$> news) set
 
@@ -240,7 +244,7 @@ getSiblingComments c = do
       Nothing -> getPostComments parent
   case Post.content p of
     Post.SelfPost _ _ -> (,) True <$> resolveComments parent cs
-    _ -> (,) True <$> resolveComments parent cs
+    _ -> (,) (isJust (Comment.inReplyTo c)) <$> resolveComments parent cs
 
 resolveComments :: MonadIO m => PostID -> [CommentReference] -> RedditT m [Comment]
 resolveComments p refs = concat <$> mapM f refs
