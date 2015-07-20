@@ -21,7 +21,7 @@ library
     aeson,
     async,
     binary,
-    bounded-set,
+    bounded,
     containers,
     data-counter,
     naive-bayes,
