@@ -138,7 +138,7 @@ run sem settings =
 loopWith :: (WriteSem -> RedditT (ReaderT ConcreteSettings IO) ()) -> WriteSem -> ConcreteSettings -> IO ()
 loopWith act sem settings = fix $ \loop -> do
   res <- flip runReaderT settings $
-    runRedditWithRateLimiting (coerce (username settings)) (password settings) $
+    runReddit (coerce (username settings)) (password settings) $
       act sem
   case res of
     Left (APIError CredentialsError) ->
