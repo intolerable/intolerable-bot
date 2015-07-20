@@ -32,7 +32,7 @@ import Reddit.Types.User (Username(..))
 import System.Exit
 import System.IO
 import System.IO.Error
-import qualified Data.BoundedSet as Bounded
+import qualified Data.Bounded.Set as Bounded
 import qualified Data.Classifier.NaiveBayes as NB
 import qualified Data.Counter as Counter
 import qualified Data.Map as Map
@@ -197,7 +197,6 @@ commentsLoop sem = do
   t <- lift $ asks refreshTime
   withInitial (Bounded.empty 500) $ \loop set -> do
     Listing _ _ cs <- getNewComments' (Options Nothing (Just 100)) (Just r)
-    writeLogEntry sem r "got listing"
     let news = filter (\x -> not $ Bounded.member (Comment.commentID x) set) cs
     mapM_ (commentResponder sem) news
     unless (null news) $ writeLogEntry sem r "dealt with new comments"
@@ -212,9 +211,10 @@ commentResponder sem c = do
   bs <- lift $ asks bans
   when (shouldRespond u (Comment.body c)) $
     unless (Comment.author c `elem` bs) $ do
+      writeLogEntry sem r "found a comment"
       (selfpost, sibs) <- getSiblingComments c
       unless (any ((== u) . Comment.author) sibs) $ do
-        writeLogEntry sem r "found a comment"
+        writeLogEntry sem r $ "found a comment we didn't already respond to: " <> coerce (Comment.commentID c)
         case Comment.inReplyTo c of
           Just parentComment -> reply parentComment rt >>= logReply r
           Nothing ->
