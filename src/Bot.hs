@@ -15,6 +15,7 @@ import Data.Binary
 import Data.Char
 import Data.Classifier.NaiveBayes (NaiveBayes)
 import Data.Coerce
+import Data.Default.Class
 import Data.Function (fix)
 import Data.Maybe
 import Data.Monoid ((<>))
@@ -23,10 +24,8 @@ import Data.Time.Clock
 import Data.Time.Format
 import Data.Yaml
 import Reddit hiding (failWith, bans)
-import Reddit.Types.Comment (Comment, PostComments(..), CommentReference(..))
+import Reddit.Types.Comment (PostComments(..), CommentReference(..))
 import Reddit.Types.Listing
-import Reddit.Types.Options
-import Reddit.Types.Post (PostID)
 import Reddit.Types.Subreddit (SubredditName(..))
 import Reddit.Types.User (Username(..))
 import System.Exit
@@ -138,7 +137,9 @@ run sem settings =
 loopWith :: (WriteSem -> RedditT (ReaderT ConcreteSettings IO) ()) -> WriteSem -> ConcreteSettings -> IO ()
 loopWith act sem settings = fix $ \loop -> do
   res <- flip runReaderT settings $
-    runReddit (coerce (username settings)) (password settings) $
+    runRedditWith def { customUserAgent = Just "intolerable-bot v0.1.0.0"
+                      , loginMethod = Credentials (coerce (username settings)) (password settings)
+                      , rateLimitingEnabled = False } $
       act sem
   case res of
     Left (APIError CredentialsError) ->

@@ -24,6 +24,7 @@ library
     bounded,
     containers,
     data-counter,
+    data-default-class,
     naive-bayes,
     optparse-applicative,
     reddit,
