@@ -127,29 +127,31 @@ loadClassifier fp = EitherA $ f <$> decodeFileOrFail fp
 
 run :: WriteSem -> ConcreteSettings -> IO ()
 run sem settings =
-  withAsync (loopWith commentsLoop sem settings) $ \c ->
+  withAsync (loopWith (forever $ commentsLoop sem) sem settings) $ \c ->
     case classifier settings of
       Just _ ->
-        withAsync (loopWith postsLoop sem settings) $ \p ->
+        withAsync (loopWith (forever $ postsLoop sem) sem settings) $ \p ->
           void $ waitBoth c p
       Nothing -> wait c
 
-loopWith :: (WriteSem -> RedditT (ReaderT ConcreteSettings IO) ()) -> WriteSem -> ConcreteSettings -> IO ()
-loopWith act sem settings = fix $ \loop -> do
+loopWith :: RedditT (ReaderT ConcreteSettings IO) () -> WriteSem -> ConcreteSettings -> IO ()
+loopWith act sem settings = do
   res <- flip runReaderT settings $
-    runRedditWith def { customUserAgent = Just "intolerable-bot v0.1.0.0"
-                      , loginMethod = Credentials (coerce (username settings)) (password settings)
-                      , rateLimitingEnabled = False } $
-      act sem
+    runResumeRedditWith def { customUserAgent = Just "intolerable-bot v0.1.0.0"
+                            , loginMethod = Credentials (coerce (username settings)) (password settings)
+                            , rateLimitingEnabled = False } act
   case res of
-    Left (APIError CredentialsError) ->
+    Left (APIError CredentialsError, _) ->
       withWriteSem sem $
         Text.putStrLn $ "Username / password details incorrect for /r/" <> coerce (subreddit settings)
-    Left err -> do
+    Left (err, Nothing) -> do
       liftIO $ print err
       (5 * refreshTime settings) `seconds` threadDelay
-      loop
-    Right () -> loop
+      loopWith act sem settings
+    Left (err, Just resume) -> do
+      liftIO $ print err
+      loopWith resume sem settings
+    Right () -> return ()
 
 postsLoop :: WriteSem -> RedditT (ReaderT ConcreteSettings IO) ()
 postsLoop sem = do
