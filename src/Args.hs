@@ -96,4 +96,3 @@ data Bans = BansList [Username]
 data Reply = ReplyLiteral ReplyText
            | ReplyFilePath FilePath
   deriving (Show, Read, Eq)
-
