@@ -66,7 +66,7 @@ main = do
       if Map.null lefts
         then do
           sem <- newWriteSemIO
-          void $ mapConcurrently (\(k, s) -> run sem (s k)) $  Map.toList rights
+          void $ mapConcurrently (\(k, s) -> run sem (s k)) $ Map.toList rights
         else do
           Map.foldrWithKey handleError (return ()) lefts
           exitFailure
