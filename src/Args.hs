@@ -56,13 +56,14 @@ data Settings =
            , _bans :: [Bans]
            , _refreshTime :: Maybe RefreshTime
            , _classifier :: Maybe FilePath
-           , _useClassifier :: Bool }
+           , _useClassifier :: Bool
+           , _verbose :: Maybe Bool }
   deriving (Show, Read, Eq)
 
 instance Monoid Settings where
-  mempty = Settings Nothing Nothing Nothing [] Nothing Nothing False
-  Settings u1 p1 r1 b1 t1 c1 x1 `mappend` Settings u2 p2 r2 b2 t2 c2 x2 =
-    Settings (u1 <|> u2) (p1 <|> p2) (r1 <|> r2) (b1 <> b2) (t1 <|> t2) (c1 <|> c2) (x1 || x2)
+  mempty = Settings Nothing Nothing Nothing [] Nothing Nothing False Nothing
+  Settings u1 p1 r1 b1 t1 c1 x1 v1 `mappend` Settings u2 p2 r2 b2 t2 c2 x2 v2 =
+    Settings (u1 <|> u2) (p1 <|> p2) (r1 <|> r2) (b1 <> b2) (t1 <|> t2) (c1 <|> c2) (x1 || x2) (v1 <|> v2)
 
 resolve :: Settings -> Map a Settings -> Map a Settings
 resolve x = fmap (x <>)
@@ -80,6 +81,7 @@ instance FromJSON Settings where
                       , o .:? "refresh_interval" ]
              <*> o .:? "classifier_file"
              <*> (o .: "use_classifier" <|> pure False)
+             <*> o .:? "verbose"
     where
       parsedBans =
         mappend <$> (pure . BansList . map Username <$> (o .: "bans" <|> pure []))

@@ -48,7 +48,8 @@ data ConcreteSettings =
                    , refreshTime :: RefreshTime
                    , bans :: [Username]
                    , classifier :: Maybe (NaiveBayes Bool Text)
-                   , useClassifier :: Bool }
+                   , useClassifier :: Bool
+                   , verboseOutput :: Bool }
   deriving (Show)
 
 main :: IO ()
@@ -82,7 +83,7 @@ pluralize [_] x = x
 pluralize _ x = x <> "s"
 
 confirm :: Settings -> IO (Either [Text] (SubredditName -> ConcreteSettings))
-confirm (Settings u p r b t c x) =
+confirm (Settings u p r b t c x v) =
   runEitherA $
     subredditLastSettings
       <$> justOr ["Missing username"] u
@@ -92,9 +93,10 @@ confirm (Settings u p r b t c x) =
       <*> loadBans b
       <*> sequenceA (fmap loadClassifier c)
       <*> pure x
+      <*> pure (fromMaybe False v)
 
-subredditLastSettings :: Username -> Password -> ReplyText -> RefreshTime -> [Username] -> Maybe (NaiveBayes Bool Text) -> Bool -> SubredditName -> ConcreteSettings
-subredditLastSettings u p r t b n x s = ConcreteSettings u p s r t b n x
+subredditLastSettings :: Username -> Password -> ReplyText -> RefreshTime -> [Username] -> Maybe (NaiveBayes Bool Text) -> Bool -> Bool -> SubredditName -> ConcreteSettings
+subredditLastSettings u p r t b n x v s = ConcreteSettings u p s r t b n x v
 
 loadBans :: [Bans] -> EitherA [Text] IO [Username]
 loadBans = fmap concat . sequenceA . map f
